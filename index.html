@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tails Test</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background-color: black;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .game-container {
+      position: relative;
+      width: 100vw;
+      max-width: 1022px;
+      height: 498px;
+      background-image: url('./green_hill_zone_background_by_sonicmechaomega999_d9uisrx-fullview.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: bottom;
+      image-rendering: pixelated;
+      overflow: hidden;
+    }
+
+    .tails-body {
+      position: absolute;
+      width: 42px;
+      height: 62px;
+      image-rendering: pixelated;
+      z-index: 2;
+    }
+
+    .tails-tails {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      image-rendering: pixelated;
+      z-index: 1;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      right: 0;          /* add right 0 so it stretches full width */
+      width: auto;       /* unset fixed width */
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;   /* add horizontal padding */
+      z-index: 99;
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+
+    .left-controls,
+    .right-controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .control-btn {
+      width: 50px;
+      height: 50px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 2px solid white;
+      border-radius: 50%;
+      color: white;
+      font-size: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      pointer-events: all;
+      touch-action: manipulation;
+    }
+
+    .control-btn:active {
+      background-color: rgba(255, 255, 255, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+<button onclick="goFullscreen()" style="position:absolute; top:10px; right:10px; z-index:100;">Fullscreen</button>
+
+  <div class="game-container">
+    <img class="tails-tails" src="spr_tails_tails_0.png" alt="Tails' tail" />
+    <img class="tails-body" src="spr_tails_idle_0.png" alt="Tails" />
+
+    <!-- Touch Controls -->
+    <div class="controls">
+      <div class="left-controls">
+        <div id="btn-left" class="control-btn">◀</div>
+        <div id="btn-right" class="control-btn">▶</div>
+      </div>
+      <div class="right-controls">
+        <div id="btn-jump" class="control-btn">⭡</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tailsBody = document.querySelector('.tails-body');
+    const tailsTails = document.querySelector('.tails-tails');
+
+    const idleWidth = 42;
+    const idleHeight = 62;
+    const walkWidth = 88;
+    const walkHeight = 64;
+    const widthOffset = (walkWidth - idleWidth) / 2;
+
+    let positionX = 300;
+    let positionY = 300;
+    let direction = 1;
+    let moving = false;
+    let isJumping = false;
+    let isFlying = false;
+    let hasJumped = false;
+    let hasFlown = false;
+
+    let walkFrame = 0;
+    const totalWalkFrames = 8;
+    const walkAnimationSpeed = 100;
+    let lastWalkFrameTime = 0;
+
+    let idleFrame = 0;
+    const totalIdleFrames = 5;
+    let idleInterval = null;
+
+    let velocityY = 0;
+    const gravity = 0.5;
+    const jumpStrength = -16;
+    const groundY = 300;
+
+    let jumpTailFrame = 0;
+    const totalJumpTailFrames = 4;
+    const jumpTailAnimationSpeed = 150;
+    let lastJumpTailFrameTime = 0;
+
+    let jumpSpinFrame = 0;
+    const totalJumpSpinFrames = 3;
+    const jumpSpinAnimationSpeed = 120;
+    let lastJumpSpinFrameTime = 0;
+
+    let flyFrame = 0;
+    const totalFlyFrames = 2;
+    const flyAnimationSpeed = 150;
+    let lastFlyFrameTime = 0;
+
+    let keysPressed = {
+      left: false,
+      right: false,
+      space: false,
+    };
+
+    function updatePosition() {
+      tailsBody.style.left = `${positionX}px`;
+      tailsBody.style.top = `${positionY}px`;
+
+      tailsTails.style.top = `${positionY + 20}px`;
+
+      if (isJumping || isFlying) {
+        tailsTails.style.left = direction === 1
+          ? `${positionX - 30}px`
+          : `${positionX + 55}px`;
+      } else {
+        tailsTails.style.left = direction === 1
+          ? `${positionX - 25}px`
+          : `${positionX + idleWidth + 25 - 40}px`;
+      }
+
+      tailsBody.style.transform = direction === -1 ? 'scaleX(-1)' : 'scaleX(1)';
+      tailsTails.style.transform = direction === -1 ? 'scaleX(-1)' : 'scaleX(1)';
+    }
+
+    function updateWalkFrame(timestamp) {
+      positionX += direction * 4;
+
+      if (!lastWalkFrameTime) lastWalkFrameTime = timestamp;
+      const elapsed = timestamp - lastWalkFrameTime;
+
+      if (elapsed > walkAnimationSpeed) {
+        walkFrame = (walkFrame + 1) % totalWalkFrames;
+        lastWalkFrameTime = timestamp;
+      }
+
+      updatePosition();
+
+      if (isJumping || isFlying) return;
+
+      tailsBody.src = `spr_tails_walk_${walkFrame}.png`;
+      tailsBody.style.width = `${walkWidth}px`;
+      tailsBody.style.height = `${walkHeight}px`;
+      tailsTails.style.display = 'none';
+    }
+
+    function startWalk(dir) {
+      direction = dir;
+      if (!moving) {
+        moving = true;
+        positionX -= widthOffset;
+        clearInterval(idleInterval);
+        idleInterval = null;
+        walkFrame = 0;
+        lastWalkFrameTime = 0;
+      }
+    }
+
+    function stopWalk() {
+      if (moving) {
+        moving = false;
+        positionX += widthOffset;
+
+        if (!isJumping && !isFlying) {
+          tailsBody.src = 'spr_tails_idle_0.png';
+          tailsBody.style.width = `${idleWidth}px`;
+          tailsBody.style.height = `${idleHeight}px`;
+          tailsTails.style.display = 'block';
+          startIdleAnimation();
+        }
+      }
+    }
+
+    function startIdleAnimation() {
+      clearInterval(idleInterval);
+      idleInterval = setInterval(() => {
+        tailsTails.src = `spr_tails_tails_${idleFrame}.png`;
+        idleFrame = (idleFrame + 1) % totalIdleFrames;
+      }, 140);
+    }
+
+    function startJump() {
+      if (isJumping || isFlying) return;
+      isJumping = true;
+      hasJumped = true;
+      velocityY = jumpStrength;
+
+      lastJumpTailFrameTime = 0;
+      lastJumpSpinFrameTime = 0;
+      jumpTailFrame = 0;
+      jumpSpinFrame = 0;
+
+      tailsBody.style.width = '64px';
+      tailsBody.style.height = '64px';
+      tailsTails.style.display = 'block';
+
+      tailsBody.src = `spr_tails_jump_${jumpSpinFrame}.png`;
+      tailsTails.src = `spr_tails_tail1_${jumpTailFrame}.png`;
+
+      clearInterval(idleInterval);
+      idleInterval = null;
+    }
+
+    function startFlying() {
+      if (isFlying || !hasJumped || hasFlown || positionY >= groundY) return;
+
+      isFlying = true;
+      hasFlown = true;
+      velocityY = -1.5;
+      flyFrame = 0;
+      lastFlyFrameTime = 0;
+
+      tailsBody.style.width = '76px';
+      tailsBody.style.height = '64px';
+    }
+
+    function gameLoop(timestamp) {
+      if (keysPressed.left && !keysPressed.right) {
+        startWalk(-1);
+        updateWalkFrame(timestamp);
+      } else if (keysPressed.right && !keysPressed.left) {
+        startWalk(1);
+        updateWalkFrame(timestamp);
+      } else {
+        if (moving) stopWalk();
+      }
+
+      if (isFlying) {
+        if (!lastFlyFrameTime) lastFlyFrameTime = timestamp;
+        if (timestamp - lastFlyFrameTime > flyAnimationSpeed) {
+          flyFrame = (flyFrame + 1) % totalFlyFrames;
+          tailsBody.src = `spr_tails_fly_${flyFrame}.png`;
+          lastFlyFrameTime = timestamp;
+        }
+
+        tailsTails.style.display = 'none';
+
+        if (keysPressed.space) {
+          velocityY = -1.5;
+        } else {
+          velocityY += gravity;
+        }
+
+        if (velocityY > 5) velocityY = 5;
+      }
+
+      if (isJumping || isFlying) {
+        positionY += velocityY;
+
+        if (!isFlying) velocityY += gravity;
+
+        if (isJumping && !isFlying) {
+          if (!lastJumpSpinFrameTime) lastJumpSpinFrameTime = timestamp;
+          if (timestamp - lastJumpSpinFrameTime > jumpSpinAnimationSpeed) {
+            jumpSpinFrame = (jumpSpinFrame + 1) % totalJumpSpinFrames;
+            tailsBody.src = `spr_tails_jump_${jumpSpinFrame}.png`;
+            lastJumpSpinFrameTime = timestamp;
+          }
+
+          if (!lastJumpTailFrameTime) lastJumpTailFrameTime = timestamp;
+          if (timestamp - lastJumpTailFrameTime > jumpTailAnimationSpeed) {
+            jumpTailFrame = (jumpTailFrame + 1) % totalJumpTailFrames;
+            tailsTails.src = `spr_tails_tail1_${jumpTailFrame}.png`;
+            lastJumpTailFrameTime = timestamp;
+          }
+        }
+
+        if (positionY >= groundY) {
+          positionY = groundY;
+          velocityY = 0;
+          isJumping = false;
+          isFlying = false;
+          hasJumped = false;
+          hasFlown = false;
+
+          tailsBody.src = 'spr_tails_idle_0.png';
+          tailsBody.style.width = `${idleWidth}px`;
+          tailsBody.style.height = `${idleHeight}px`;
+          tailsTails.src = 'spr_tails_tails_0.png';
+
+          if (!moving) {
+            tailsTails.style.display = 'block';
+            startIdleAnimation();
+          }
+        }
+
+        updatePosition();
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Touch & Pointer Controls
+    function addControlListeners(id, downHandler, upHandler) {
+      const el = document.getElementById(id);
+
+      // Touch events
+      el.addEventListener('touchstart', e => {
+        e.preventDefault();
+        console.log(id + ' touchstart');
+        downHandler();
+      });
+      el.addEventListener('touchend', e => {
+        e.preventDefault();
+        console.log(id + ' touchend');
+        upHandler();
+      });
+      el.addEventListener('touchcancel', e => {
+        e.preventDefault();
+        console.log(id + ' touchcancel');
+        upHandler();
+      });
+
+      // Pointer events fallback
+      el.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        console.log(id + ' pointerdown');
+        downHandler();
+      });
+      el.addEventListener('pointerup', e => {
+        e.preventDefault();
+        console.log(id + ' pointerup');
+        upHandler();
+      });
+      el.addEventListener('pointercancel', e => {
+        e.preventDefault();
+        console.log(id + ' pointercancel');
+        upHandler();
+      });
+    }
+
+    addControlListeners('btn-left',
+      () => keysPressed.left = true,
+      () => keysPressed.left = false
+    );
+
+    addControlListeners('btn-right',
+      () => keysPressed.right = true,
+      () => keysPressed.right = false
+    );
+
+    addControlListeners('btn-jump',
+      () => {
+        if (!keysPressed.space) {
+          keysPressed.space = true;
+          if (!hasJumped) startJump();
+          else if (!hasFlown && !isFlying) startFlying();
+        }
+      },
+      () => keysPressed.space = false
+    );
+
+    updatePosition();
+    startIdleAnimation();
+    requestAnimationFrame(gameLoop);
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker registered!'))
+        .catch(err => console.error('Service Worker registration failed:', err));
+    }
+  </script>
+
+<script>
+function goFullscreen() {
+  const elem = document.querySelector('.game-container');
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) {
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) {
+    elem.msRequestFullscreen();
+  }
+}
+</script>
+
+</body>
+</html>
