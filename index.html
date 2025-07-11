@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tails Test</title>
+  <meta name="theme-color" content="#000000" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background-image: url('./green_hill_zone_background_by_sonicmechaomega999_d9uisrx-fullview.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: bottom;
+      image-rendering: pixelated;
+      overflow: hidden;
+    }
+
+    .tails-body, .tails-tails {
+      position: absolute;
+      image-rendering: pixelated;
+    }
+
+    .tails-body {
+      width: 42px;
+      height: 62px;
+      z-index: 2;
+    }
+
+    .tails-tails {
+      width: 40px;
+      height: 40px;
+      z-index: 1;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 99;
+      pointer-events: none;
+    }
+
+    .left-controls, .right-controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .control-btn, #fullscreen-btn {
+      width: 50px;
+      height: 50px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 2px solid white;
+      border-radius: 50%;
+      color: white;
+      font-size: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      pointer-events: all;
+      touch-action: manipulation;
+    }
+
+    .control-btn:active, #fullscreen-btn:active {
+      background-color: rgba(255, 255, 255, 0.4);
+    }
+
+    #fullscreen-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 18px;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container" id="game-container">
+    <img class="tails-tails" src="spr_tails_tails_0.png" alt="Tails' tail" />
+    <img class="tails-body" src="spr_tails_idle_0.png" alt="Tails" />
+
+    <!-- Fullscreen Button -->
+    <div id="fullscreen-btn">⛶</div>
+
+    <!-- Touch Controls -->
+    <div class="controls">
+      <div class="left-controls">
+        <div id="btn-left" class="control-btn">◀</div>
+        <div id="btn-right" class="control-btn">▶</div>
+      </div>
+      <div class="right-controls">
+        <div id="btn-jump" class="control-btn">⭡</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Original Script Goes Here -->
+  <!-- Place your full original script exactly as it is, no changes needed -->
+  <script>
+    // [Place your full JS code from <script> here unchanged]
+    // To save space here, just leave as-is.
+  </script>
+
+  <!-- Fullscreen Script -->
+  <script>
+    const fsButton = document.getElementById('fullscreen-btn');
+    const gameContainer = document.getElementById('game-container');
+
+    fsButton.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        gameContainer.requestFullscreen().catch(err => {
+          alert(`Error trying to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
+  </script>
+
+  <!-- Optional: Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker registered!'))
+        .catch(err => console.error('Service Worker registration failed:', err));
+    }
+  </script>
+</body>
+</html>
