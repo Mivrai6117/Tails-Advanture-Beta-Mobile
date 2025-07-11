@@ -6,92 +6,61 @@
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#000000" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      background-color: black;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      overflow: hidden;
-      touch-action: none;
-    }
+  
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: black;
+  }
 
-    .game-container {
-      position: relative;
-      width: 100vw;
-      max-width: 1022px;
-      height: 498px;
-      background-image: url('./green_hill_zone_background_by_sonicmechaomega999_d9uisrx-fullview.jpg');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: bottom;
-      image-rendering: pixelated;
-      overflow: hidden;
-    }
+  .game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100%;
+    max-height: 100%;
+    background-image: url('green_hill_zone_background_by_sonicmechaomega999_d9uisrx-fullview.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: bottom;
+    image-rendering: pixelated;
+    overflow: hidden;
+  }
 
-    .tails-body {
-      position: absolute;
-      width: 42px;
-      height: 62px;
-      image-rendering: pixelated;
-      z-index: 2;
-    }
+  .tails-body {
+    position: absolute;
+    width: 42px;
+    height: 62px;
+    image-rendering: pixelated;
+    z-index: 2;
+  }
 
-    .tails-tails {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      image-rendering: pixelated;
-      z-index: 1;
-    }
+  .tails-tails {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    image-rendering: pixelated;
+    z-index: 1;
+  }
 
-    .controls {
-      position: absolute;
-      bottom: 10px;
-      left: 0;
-      right: 0;          /* add right 0 so it stretches full width */
-      width: auto;       /* unset fixed width */
-      display: flex;
-      justify-content: space-between;
-      padding: 0 20px;   /* add horizontal padding */
-      z-index: 99;
-      pointer-events: none;
-      box-sizing: border-box;
-    }
+  .controls {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 99;
+    pointer-events: auto;
+  }
+</style>
 
-    .left-controls,
-    .right-controls {
-      display: flex;
-      gap: 12px;
-    }
-
-    .control-btn {
-      width: 50px;
-      height: 50px;
-      background-color: rgba(255, 255, 255, 0.2);
-      border: 2px solid white;
-      border-radius: 50%;
-      color: white;
-      font-size: 30px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      user-select: none;
-      pointer-events: all;
-      touch-action: manipulation;
-    }
-
-    .control-btn:active {
-      background-color: rgba(255, 255, 255, 0.4);
-    }
-  </style>
 </head>
 <body>
-
-<button onclick="goFullscreen()" style="position:absolute; top:10px; right:10px; z-index:100;">Fullscreen</button>
-
   <div class="game-container">
     <img class="tails-tails" src="spr_tails_tails_0.png" alt="Tails' tail" />
     <img class="tails-body" src="spr_tails_idle_0.png" alt="Tails" />
@@ -421,19 +390,5 @@
         .catch(err => console.error('Service Worker registration failed:', err));
     }
   </script>
-
-<script>
-function goFullscreen() {
-  const elem = document.querySelector('.game-container');
-  if (elem.requestFullscreen) {
-    elem.requestFullscreen();
-  } else if (elem.webkitRequestFullscreen) {
-    elem.webkitRequestFullscreen();
-  } else if (elem.msRequestFullscreen) {
-    elem.msRequestFullscreen();
-  }
-}
-</script>
-
 </body>
 </html>
